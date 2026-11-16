@@ -427,14 +427,15 @@ function LocalTools({
   const [busy, setBusy] = useState(false);
   const [models, setModels] = useState<string[]>([]);
   const [docker, setDocker] = useState("Checking Docker…");
+  const [ollamaAvailable, setOllamaAvailable] = useState(false);
   const [deadline, setDeadline] = useState(900);
   const [commandLimit, setCommandLimit] = useState(300);
   useEffect(() => {
     api<{ config: Provider }>("/providers")
       .then((r) => setProvider(r.config))
       .catch((e) => setNotice(e.message));
-    api<{ docker: { message: string } }>("/health")
-      .then((r) => setDocker(r.docker.message))
+    api<{ docker: { message: string }; ollama: { available: boolean } }>("/health")
+      .then((r) => { setDocker(r.docker.message); setOllamaAvailable(r.ollama.available); })
       .catch((e) => setDocker(e.message));
   }, []);
   function setKind(kind: Provider["kind"]) {
@@ -607,7 +608,7 @@ function LocalTools({
             >
               <option value="codexlb">CodexLB</option>
               <option value="compatible">OpenAI-compatible API</option>
-              <option value="ollama">Ollama</option>
+              <option value="ollama" disabled={!ollamaAvailable}>{ollamaAvailable ? "Ollama" : "Ollama (local runtime unavailable)"}</option>
             </select>
           </label>
           {provider.kind === "compatible" && (

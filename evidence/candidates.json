@@ -1,0 +1,166 @@
+[
+  {
+    "benchmark_id": "py-intervals",
+    "source_sha256": "0cba775def1b9d19e480452ee668ec9e0fd55c87a019ec23daac97f19b197464",
+    "baseline_ci_run": "43898836063",
+    "provider": {
+      "kind": "codexlb",
+      "model": "gpt-6-astra",
+      "transport": "responses"
+    },
+    "roles": [
+      {
+        "role": "planner",
+        "output": {
+          "summary": "The merge condition excludes shared endpoints. Change it to include equality for closed intervals, preserving sorting and fresh output lists so the input remains unchanged. The static-check failure is environmental and does not warrant configuration changes.",
+          "steps": [
+            "In src/repair.py, change `start < result[-1][1]` to `start <= result[-1][1]`.",
+            "Retain `sorted(items)`, newly allocated `[start, end]` output intervals, and the maximum-end update to preserve input immutability and handle unsorted, nested, and overlapping intervals.",
+            "Validate with the existing tests when execution is available, checking shared endpoints, point intervals, disjoint intervals, empty input, and input preservation without modifying tests or runner configuration."
+          ]
+        },
+        "usage": {
+          "input_tokens": 788,
+          "output_tokens": 155,
+          "total_tokens": 943
+        },
+        "created": 1794843748.551024
+      },
+      {
+        "role": "implementer",
+        "output": {
+          "summary": "Updated the merge condition to include shared endpoints for closed intervals. Sorting and newly allocated output intervals preserve the input without mutation. Tests could not be rerun because execution is unavailable.",
+          "edits": [
+            {
+              "path": "src/repair.py",
+              "content": "def repair(items):\n    result = []\n    for start, end in sorted(items):\n        if result and start <= result[-1][1]:\n            result[-1][1] = max(result[-1][1], end)\n        else:\n            result.append([start, end])\n    return result\n"
+            }
+          ]
+        },
+        "usage": {
+          "input_tokens": 1038,
+          "output_tokens": 130,
+          "total_tokens": 1168
+        },
+        "created": 1794843753.7709808
+      },
+      {
+        "role": "validator",
+        "output": {
+          "summary": "The proposed change correctly merges closed intervals that share an endpoint by using <=. Sorting handles unsorted input, the maximum-end update handles nested overlaps, and fresh output lists avoid mutating input intervals. The edit is confined to the permitted src/repair.py file. Request tests to confirm the regression and existing behavior; no checks were executed here. The baseline static failure is environmental, not a code finding.",
+          "checks": [
+            "tests"
+          ]
+        },
+        "usage": {
+          "input_tokens": 1103,
+          "output_tokens": 92,
+          "total_tokens": 1195
+        },
+        "created": 1794843758.9472053
+      }
+    ],
+    "proposal": {
+      "summary": "Updated the merge condition to include shared endpoints for closed intervals. Sorting and newly allocated output intervals preserve the input without mutation. Tests could not be rerun because execution is unavailable.",
+      "edits": [
+        {
+          "path": "src/repair.py",
+          "content": "def repair(items):\n    result = []\n    for start, end in sorted(items):\n        if result and start <= result[-1][1]:\n            result[-1][1] = max(result[-1][1], end)\n        else:\n            result.append([start, end])\n    return result\n"
+        }
+      ]
+    }
+  },
+  {
+    "benchmark_id": "ts-versions",
+    "source_sha256": "263e154b2131a2356a144ea9cd56faf2a3e23d5e35202cc1c295a292f32b68bc",
+    "baseline_ci_run": "43898836063",
+    "provider": {
+      "kind": "codexlb",
+      "model": "gpt-6-astra",
+      "transport": "responses"
+    },
+    "roles": [
+      {
+        "role": "planner",
+        "output": {
+          "summary": "Fix src/repair.ts to compare dotted numeric segments by value rather than raw string ordering, treating missing segments as zero and preserving exact comparisons for large segments.",
+          "steps": [
+            "Modify only src/repair.ts, preserving the exported function signature and iteration over the longer version.",
+            "For each segment, default missing values to '0', strip leading zeros, and normalize an empty result to '0'.",
+            "Compare normalized segment lengths first; if equal, compare their digit strings. Return -1 or 1 on the first numeric difference, otherwise return 0 after all segments.",
+            "Verify using the existing checks, without modifying tests or configuration; confirm numeric ordering, leading-zero equivalence, missing trailing zeros, and large numeric segments."
+          ]
+        },
+        "usage": {
+          "input_tokens": 609,
+          "output_tokens": 150,
+          "total_tokens": 759
+        },
+        "created": 1794843766.6822333
+      },
+      {
+        "role": "implementer",
+        "output": {
+          "summary": "Compare numeric segments exactly by removing leading zeros, then comparing digit counts and equal-length digit strings. Missing segments remain zero; large segments avoid numeric precision loss. Checks could not be run without execution access.",
+          "edits": [
+            {
+              "path": "src/repair.ts",
+              "content": "export function repair(a: string, b: string): number {\n  const left = a.split('.');\n  const right = b.split('.');\n  for (let i = 0; i < Math.max(left.length, right.length); i++) {\n    const x = (left[i] ?? '0').replace(/^0+/, '') || '0';\n    const y = (right[i] ?? '0').replace(/^0+/, '') || '0';\n    if (x.length !== y.length) return x.length < y.length ? -1 : 1;\n    if (x !== y) return x < y ? -1 : 1;\n  }\n  return 0;\n}\n"
+            }
+          ]
+        },
+        "usage": {
+          "input_tokens": 855,
+          "output_tokens": 220,
+          "total_tokens": 1075
+        },
+        "created": 1794843774.4210253
+      },
+      {
+        "role": "validator",
+        "output": {
+          "summary": "The proposed change is limited to src/repair.ts and correctly compares numeric segments by normalizing leading zeros, comparing digit counts, then comparing equal-length digit strings. It treats missing segments as zero and avoids precision loss for large segments. No protected files are changed. Source review supports the repair; run tests and static checks to confirm, as no post-change results are available.",
+          "checks": [
+            "tests",
+            "static"
+          ]
+        },
+        "usage": {
+          "input_tokens": 1010,
+          "output_tokens": 88,
+          "total_tokens": 1098
+        },
+        "created": 1794843779.6952546
+      }
+    ],
+    "proposal": {
+      "summary": "Compare numeric segments exactly by removing leading zeros, then comparing digit counts and equal-length digit strings. Missing segments remain zero; large segments avoid numeric precision loss. Checks could not be run without execution access.",
+      "edits": [
+        {
+          "path": "src/repair.ts",
+          "content": "export function repair(a: string, b: string): number {\n  const left = a.split('.');\n  const right = b.split('.');\n  for (let i = 0; i < Math.max(left.length, right.length); i++) {\n    const x = (left[i] ?? '0').replace(/^0+/, '') || '0';\n    const y = (right[i] ?? '0').replace(/^0+/, '') || '0';\n    if (x.length !== y.length) return x.length < y.length ? -1 : 1;\n    if (x !== y) return x < y ? -1 : 1;\n  }\n  return 0;\n}\n"
+        }
+      ]
+    }
+  },
+  {
+    "benchmark_id": "py-intervals",
+    "source_sha256": "0cba775def1b9d19e480452ee668ec9e0fd55c87a019ec23daac97f19b197464",
+    "baseline_ci_run": "43898836063",
+    "provider": {
+      "kind": "control",
+      "model": "deliberately-incomplete-patch",
+      "transport": "none"
+    },
+    "roles": [],
+    "proposal": {
+      "summary": "Negative control: a comment-only patch intentionally leaves the bug in place",
+      "edits": [
+        {
+          "path": "src/repair.py",
+          "content": "def repair(items):\n    result = []\n    for start, end in sorted(items):\n        if result and start < result[-1][1]:\n            result[-1][1] = max(result[-1][1], end)\n        else:\n            result.append([start, end])\n    return result\n\n# Negative control: the boundary comparison is unchanged.\n"
+        }
+      ]
+    }
+  }
+]

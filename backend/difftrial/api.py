@@ -2,6 +2,7 @@ import asyncio
 import json
 import shutil
 
+import httpx
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlalchemy import select
@@ -58,11 +59,17 @@ def create_app(store=None):
 
     @app.get("/api/v1/health")
     def health():
+        try:
+            response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=1)
+            ollama = {"available": response.status_code == 200, "message": "Ollama is running"}
+        except httpx.HTTPError:
+            ollama = {"available": False, "message": "Start Ollama locally to enable this provider"}
         return {
             "mode": "local",
             "docker": docker_status(),
             "queue": "durable_sqlite",
             "active_run_limit": active_run_limit(),
+            "ollama": ollama,
         }
 
     @app.get("/api/v1/benchmarks")

@@ -122,6 +122,21 @@ def test_source_tampering_detected(store, queued, tmp_path):
     assert "changed since import" in store.detail(ident)["error"]
 
 
+def test_active_cancellation_is_finalized_by_worker(store, queued):
+    ident = queued()
+
+    class CancelDuringSetup(FakeRunner):
+        def setup(self, *args):
+            store.cancel(ident)
+            return "fake"
+
+    Worker(store, CancelDuringSetup, DeterministicAdapter).once()
+    detail = store.detail(ident)
+    assert detail["status"] == "cancelled"
+    assert detail["outcome"] == "not_run"
+    assert not detail["attempts"]
+
+
 def test_comparisons_separate_different_limits(store, queued):
     ids = [queued(), queued()]
     worker = Worker(store, FakeRunner, DeterministicAdapter)

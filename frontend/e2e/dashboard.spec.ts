@@ -109,7 +109,7 @@ async function mock(page: Page, runs = [run]) {
         },
       };
     else if (path.endsWith("/health"))
-      body = { docker: { message: "Test-only Docker status" } };
+      body = { docker: { message: "Test-only Docker status" }, ollama: { available: true } };
     else if (path.endsWith("/tasks")) body = { id: "task" };
     else if (path.endsWith("/models")) body = { models: ["local-test"] };
     else if (path.endsWith("/export")) {
