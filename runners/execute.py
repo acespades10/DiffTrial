@@ -43,7 +43,7 @@ elif profile == "python":
             "--junitxml=/tmp/tests.xml",
         ]
         if check == "tests"
-        else ["ruff", "check", "--isolated", "--select", "E9,F63,F7,F82", "src"]
+        else ["ruff", "check", "--no-cache", "--isolated", "--select", "E9,F63,F7,F82", "src"]
     )
 else:
     command = (

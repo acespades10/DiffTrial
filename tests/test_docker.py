@@ -30,7 +30,8 @@ def test_all_original_benchmarks_fail_then_pass(benchmark, tmp_path):
         apply_proposal(source, Proposal(summary="Known repair fixture", edits=[fixture]), item["profile"])
         result = runner.check(image, source, item["profile"], "tests")
         assert result["exit_code"] == 0 and result["failed"] == 0 and result["report_valid"]
-        assert runner.check(image, source, item["profile"], "static")["exit_code"] == 0
+        static = runner.check(image, source, item["profile"], "static")
+        assert static["exit_code"] == 0, static
     finally:
         runner.close()
 
