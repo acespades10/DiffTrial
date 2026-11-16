@@ -8,7 +8,7 @@ from sqlalchemy import select
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .benchmarks import catalog, prepare_benchmark
-from .config import data_dir, local_codex_defaults
+from .config import active_run_limit, data_dir, local_codex_defaults
 from .db import TERMINAL, Run, Store, Task, uid
 from .exports import compare, export_bundle
 from .importer import import_github, validate_profile
@@ -58,7 +58,12 @@ def create_app(store=None):
 
     @app.get("/api/v1/health")
     def health():
-        return {"mode": "local", "docker": docker_status(), "queue": "durable_sqlite", "active_run_limit": 1}
+        return {
+            "mode": "local",
+            "docker": docker_status(),
+            "queue": "durable_sqlite",
+            "active_run_limit": active_run_limit(),
+        }
 
     @app.get("/api/v1/benchmarks")
     def benchmarks():
@@ -107,7 +112,9 @@ def create_app(store=None):
                 item, source = prepare_benchmark(request.benchmark_id, directory)
                 title, issue, profile = item["title"], item["issue"], item["profile"]
             else:
-                source = await import_github(request.github_url, request.ref, directory, request.profile)
+                source = await import_github(
+                    request.github_url, request.ref, directory, request.profile, request.repository_mb
+                )
                 title, issue, profile = request.github_url.rsplit("/", 1)[-1], request.issue, request.profile
             validate_profile(directory, profile)
             source["tree_sha256"] = tree_hash(directory)

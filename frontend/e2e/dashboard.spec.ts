@@ -141,7 +141,7 @@ test("filters, comparison selection, run evidence, downloads and themes", async 
   await page.getByLabel("Outcome", { exact: true }).selectOption("all");
   await page.getByRole("checkbox").check();
   await page.getByRole("link", { name: "Compare 1 selected" }).click();
-  await expect(page.getByText("1 / 1", { exact: true }).first()).toBeVisible();
+  await expect(page.locator(".comparison-list dd").first()).toContainText("1 / 1");
   await page.getByRole("button", { name: "Clear selection" }).click();
   await expect(page.getByText("No comparable evidence yet")).toBeVisible();
   await page.getByRole("link", { name: "Runs", exact: true }).click();
@@ -153,8 +153,8 @@ test("filters, comparison selection, run evidence, downloads and themes", async 
   await page.getByRole("button", { name: "Download diff" }).click();
   expect((await diff).suggestedFilename()).toBe("attempt-1.diff");
   const bundle = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Download evidence" }).click();
-  expect((await bundle).suggestedFilename()).toBe("test-evidence.json");
+  await page.getByRole("button", { name: "Download evidence" }).click();
+  expect((await bundle).suggestedFilename()).toBe(`difftrial-${run.id}.json`);
   await page.getByText("Static analysis log", { exact: true }).click();
   await page.getByText("Source provenance and execution limits").click();
   await expect(page.getByText("900s deadline", { exact: false })).toBeVisible();

@@ -52,3 +52,11 @@ def test_persisted_event_cursor_excludes_already_seen(store, queued):
     store.emit(ident, "second", summary="two")
     reopened = Store(store.engine.url.database)
     assert [e["kind"] for e in reopened.events(ident, cursor)] == ["second"]
+
+
+def test_active_limit_can_be_configured_locally(store, queued, monkeypatch):
+    monkeypatch.setenv("DIFFTRIAL_MAX_ACTIVE_RUNS", "2")
+    ids = [queued(), queued(), queued()]
+    assert store.claim("one") == ids[0]
+    assert store.claim("two") == ids[1]
+    assert store.claim("three") is None

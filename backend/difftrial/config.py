@@ -2,18 +2,26 @@ import os
 import tomllib
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class Limits(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     attempts: int = Field(default=2, ge=1, le=2)
     run_seconds: int = Field(default=900, ge=30, le=3600)
     command_seconds: int = Field(default=300, ge=5, le=900)
     repository_mb: int = Field(default=20, ge=1, le=100)
     memory_mb: int = Field(default=512, ge=128, le=4096)
     cpus: float = Field(default=1, ge=0.25, le=4)
+
+
+def active_run_limit():
+    value = int(os.environ.get("DIFFTRIAL_MAX_ACTIVE_RUNS", "1"))
+    if not 1 <= value <= 4:
+        raise ValueError("DIFFTRIAL_MAX_ACTIVE_RUNS must be between 1 and 4")
+    return value
 
 
 def data_dir() -> Path:

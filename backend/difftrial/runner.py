@@ -75,7 +75,7 @@ class DockerRunner:
             "--log-opt",
             "max-size=1m",
             "--log-opt",
-            "max-file=1",
+            "max-file=2",
         ]
         if offline:
             flags += [

@@ -169,7 +169,7 @@ def main():
                         "version": "1.0.0",
                         "private": True,
                         "type": "module",
-                        "devDependencies": {"vitest": "3.2.7", "typescript": "5.9.3"},
+                        "devDependencies": {"vitest": "5.1.0", "typescript": "5.9.3"},
                     },
                     indent=2,
                 )

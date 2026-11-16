@@ -18,7 +18,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
-from .config import data_dir
+from .config import active_run_limit, data_dir
 
 
 def uid():
@@ -125,13 +125,16 @@ class Store:
         now = time.time()
         with self.session() as s:
             s.execute(text("BEGIN IMMEDIATE"))
+            active = 0
             for run in s.scalars(select(Run).where(Run.status == "running")):
                 if (run.heartbeat or 0) < now - stale_seconds:
                     run.status, run.stage, run.finished = "interrupted", "interrupted", now
                     run.error = "Worker lease expired. Start a new run to retry."
                     s.add(Event(run_id=run.id, kind="interrupted", payload={"message": run.error}))
                 else:
-                    return None
+                    active += 1
+            if active >= active_run_limit():
+                return None
             run = s.scalar(select(Run).where(Run.status == "queued").order_by(Run.created).limit(1))
             if not run:
                 return None

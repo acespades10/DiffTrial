@@ -109,6 +109,19 @@ function RunDetail({ run, reload }: { run: Run; reload: () => void }) {
       setNotice((e as Error).message);
     }
   }
+  async function exportEvidence() {
+    try {
+      const result = __DEMO__
+        ? await fetch(`${import.meta.env.BASE_URL}demo/${run.id}.json`).then(async response => {
+            if (!response.ok) throw new Error("Evidence download failed. Please retry.");
+            return response.json();
+          })
+        : await api(`/runs/${run.id}/export`);
+      download(JSON.stringify(result, null, 2), `difftrial-${run.id}.json`);
+    } catch (e) {
+      setNotice((e as Error).message);
+    }
+  }
   return (
     <article className="run-detail">
       <div className="breadcrumb">
@@ -126,17 +139,9 @@ function RunDetail({ run, reload }: { run: Run; reload: () => void }) {
           <p className="lead">{run.task.issue}</p>
         </div>
         <div className="actions">
-          <a
-            className="button primary"
-            href={
-              __DEMO__
-                ? `${import.meta.env.BASE_URL}demo/${run.id}.json`
-                : `/api/v1/runs/${run.id}/export`
-            }
-            download
-          >
+          <button className="primary" onClick={exportEvidence}>
             Download evidence
-          </a>
+          </button>
           {!__DEMO__ && !terminal(run.status) && (
             <button onClick={cancel}>Cancel run</button>
           )}
@@ -845,7 +850,11 @@ export default function App() {
       : (data?.comparisons ?? []);
   return (
     <div className="app">
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href="#main" onClick={e => {
+        e.preventDefault();
+        document.getElementById("main")?.focus();
+        document.getElementById("main")?.scrollIntoView();
+      }}>
         Skip to content
       </a>
       <header className="app-header">

@@ -8,7 +8,7 @@ from .config import Limits
 
 
 class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", strict=True)
 
 
 class ProviderConfig(Strict):
@@ -49,6 +49,7 @@ class ProviderConfig(Strict):
 
 
 class TaskInput(Strict):
+    repository_mb: int = Field(default=20, ge=1, le=100)
     benchmark_id: str | None = None
     github_url: str | None = None
     ref: str = Field(default="HEAD", max_length=128)
