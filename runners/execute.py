@@ -96,4 +96,5 @@ except (OSError, ValueError, ET.ParseError, KeyError):
 for status in ("passed", "failed", "skipped"):
     report[status] = sum(c["status"] == status for c in report["cases"])
 Path("/tmp/result.json").write_text(json.dumps(report))
+print("DIFFTRIAL_REPORT_V1:" + json.dumps(report), flush=True)
 sys.exit(exit_code)

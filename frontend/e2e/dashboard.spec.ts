@@ -133,6 +133,11 @@ test("filters, comparison selection, run evidence, downloads and themes", async 
   page.on("pageerror", (e) => errors.push(e.message));
   await mock(page);
   await page.goto("/");
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("main")).toBeFocused();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Every patch has a record.");
   await page.getByLabel("Find a run").fill("missing");
   await expect(page.getByText("No matching runs")).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).click();

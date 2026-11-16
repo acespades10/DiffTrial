@@ -25,7 +25,7 @@ def test_all_original_benchmarks_fail_then_pass(benchmark, tmp_path):
     try:
         image = runner.setup(source, item["profile"])
         baseline = runner.check(image, source, item["profile"], "tests")
-        assert baseline["exit_code"] != 0 and baseline["failed"] > 0 and baseline["passed"] > 0
+        assert baseline["exit_code"] != 0 and baseline["failed"] > 0 and baseline["passed"] > 0, baseline
         fixture = json.loads((ROOT / "tests/fixtures/repairs.json").read_text(encoding="utf-8"))[benchmark]
         apply_proposal(source, Proposal(summary="Known repair fixture", edits=[fixture]), item["profile"])
         result = runner.check(image, source, item["profile"], "tests")

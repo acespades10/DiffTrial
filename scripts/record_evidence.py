@@ -45,7 +45,7 @@ def baseline(output):
             reports = {
                 check: runner.check(image, source, item["profile"], check) for check in ("tests", "static")
             }
-            assert reports["tests"]["failed"] > 0
+            assert reports["tests"]["failed"] > 0, json.dumps(reports)
             results.append(
                 {
                     "benchmark_id": ident,

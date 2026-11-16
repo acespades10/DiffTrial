@@ -176,15 +176,31 @@ class DockerRunner:
         self.images.add(snapshot)
         name = self.create(snapshot, command)
         exit_code, log, duration = self.execute(name)
-        copied = self.call(["cp", f"{name}:/tmp/result.json", "-"], check=False)
         report = {"report_valid": False, "cases": [], "passed": 0, "failed": 0, "skipped": 0}
-        if copied.returncode == 0 and len(copied.stdout) < 2_100_000:
+        # tmpfs disappears when a container exits. The trusted wrapper emits its
+        # bounded report before exit, while Docker retains stdout independently.
+        marker = "DIFFTRIAL_REPORT_V1:"
+        if marker in log:
             try:
-                with tarfile.open(fileobj=io.BytesIO(copied.stdout)) as archive:
-                    data = json.load(archive.extractfile(archive.getmembers()[0]))
-                if isinstance(data.get("cases"), list) and len(data["cases"]) <= 10000:
-                    report = data
-            except (ValueError, KeyError, tarfile.TarError):
+                prefix, encoded = log.rsplit(marker, 1)
+                line, _, suffix = encoded.partition("\n")
+                data = json.loads(line)
+                cases = data.get("cases")
+                if (
+                    isinstance(cases, list)
+                    and len(cases) <= 10000
+                    and all(
+                        isinstance(c, dict)
+                        and isinstance(c.get("name"), str)
+                        and c.get("status") in {"passed", "failed", "skipped", "pending", "todo"}
+                        for c in cases
+                    )
+                ):
+                    report = {"cases": cases, "report_valid": data.get("report_valid") is True}
+                    for status in ("passed", "failed", "skipped"):
+                        report[status] = sum(c["status"] == status for c in cases)
+                    log = prefix + suffix
+            except (ValueError, KeyError, TypeError, AttributeError):
                 pass
         # The daemon's process exit status always wins over a repository-written report.
         report.update(
