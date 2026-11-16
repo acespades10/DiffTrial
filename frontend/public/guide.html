@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>DiffTrial | Architecture and methodology</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f3ee;
+        --ink: #242b29;
+        --muted: #5f6661;
+        --accent: #176358;
+        --line: #c4c7bd;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #1b211f;
+          --ink: #f0eee7;
+          --muted: #b2bcb3;
+          --accent: #93d7be;
+          --line: #49574e;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          1rem/1.7 "Segoe UI",
+          Arial,
+          sans-serif;
+      }
+      header,
+      main,
+      footer {
+        max-width: 860px;
+        margin: auto;
+        padding: 24px;
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+      }
+      header strong {
+        font-size: 1.5rem;
+        letter-spacing: -0.05em;
+      }
+      a {
+        color: var(--accent);
+        cursor: pointer;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        text-underline-offset: 4px;
+      }
+      a:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 4px;
+      }
+      a:hover {
+        text-decoration-thickness: 2px;
+      }
+      a:active {
+        text-decoration-thickness: 3px;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+      }
+      h2 {
+        font-size: 1.2rem;
+        margin: 32px 0 12px;
+      }
+      p,
+      li {
+        max-width: 72ch;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      code {
+        font-family: Consolas, monospace;
+        overflow-wrap: anywhere;
+      }
+      footer {
+        margin-top: 32px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>DiffTrial</strong><a href="./">Return to recorded runs</a>
+    </header>
+    <main>
+      <h1>Architecture and methodology</h1>
+      <p class="muted">
+        A local code repair workbench with a separate, read-only portfolio. The
+        dashboard shows selected recorded executions, not a live agent session.
+      </p>
+      <h2>How a local run works</h2>
+      <p>
+        A React and TypeScript dashboard talks to a FastAPI application.
+        SQLAlchemy stores tasks, runs, attempts, findings and events in SQLite
+        with WAL enabled. A separate worker claims durable jobs, renews a lease,
+        and marks abandoned work as interrupted when it restarts.
+      </p>
+      <p>
+        The worker records baseline tests and static checks, then asks planner,
+        implementer, validator and reviewer roles to produce validated
+        structured outputs. It permits one revision. Execution status, test
+        outcome and review verdict remain separate throughout.
+      </p>
+      <h2>The execution boundary</h2>
+      <p>
+        Public GitHub imports are pinned to resolved commits and bounded by
+        size. Source lives under <code>src/</code>; evaluation tests and
+        dependency files are protected from agent edits. Python uses pytest and
+        Ruff. TypeScript uses Vitest and the TypeScript compiler.
+      </p>
+      <p>
+        Dependency setup uses a disposable container without credentials. Checks
+        run in fresh offline containers as a non-root user, with a read-only
+        filesystem, dropped capabilities, CPU and memory limits, and timeouts.
+        Host directories and the Docker socket are never mounted into execution
+        containers. Containers are not a guarantee against kernel
+        vulnerabilities; unfamiliar code belongs on a dedicated execution
+        machine.
+      </p>
+      <h2>Original benchmark suite</h2>
+      <p>
+        Twelve versioned tasks, six Python and six TypeScript, exercise interval
+        boundaries, zero values, Unicode identifiers, partial pages, version
+        comparison, UTC dates, duplicate records and moving averages. Each
+        includes existing coverage and a separate protected regression test. The
+        suite is intentionally small and does not estimate general coding
+        ability.
+      </p>
+      <p>
+        An observed fix requires a failing baseline, all patched tests passing,
+        no lost existing passes, and a passing static check. Completed and
+        rejected-patch benchmark runs with failing baselines form the
+        denominator. Infrastructure errors, interruptions, cancellations and
+        imported repositories are excluded and reported separately. Passing an
+        imported repository's tests does not prove its issue is resolved.
+      </p>
+      <h2>What the recorded examples mean</h2>
+      <p>
+        The first model examples use real CodexLB Responses calls for planning,
+        implementation, validation requests and review. Because Docker was
+        unavailable on the development machine, baselines and candidate checks
+        ran in GitHub Actions. Provider credentials stayed local. The activity
+        record identifies this staged protocol and the execution workflow. A
+        deliberately incomplete comment-only patch serves as a labeled negative
+        control, not a failed model answer.
+      </p>
+      <p>
+        Comparisons require the same source version, execution limits, prompt,
+        rubric and recording protocol. Staged execution duration is not
+        end-to-end agent latency. Usage is provider-reported; cost is shown only
+        when pricing is configured.
+      </p>
+      <h2>Evidence downloads</h2>
+      <p>
+        Each download uses <code>difftrial.bundle.v1</code> and includes source
+        provenance, diffs, measured reports, findings, role summaries, events
+        and SHA-256 artifact checksums. Exports allowlist fields and redact
+        recognized credentials and local paths. Checksums detect changes to
+        artifact content; they are not an independent signature of authenticity.
+      </p>
+      <h2>Running the application locally</h2>
+      <p>
+        The source workspace requires Python 3.11+, Node 22.12+, and a Linux
+        Docker engine. Install the Python package, run
+        <code>difftrial doctor</code> and <code>difftrial build-runners</code>,
+        then start <code>difftrial serve</code>, <code>difftrial worker</code>,
+        and the Vite frontend. The local API binds to loopback and stores
+        credentials only in the process environment.
+      </p>
+      <p>
+        CodexLB uses its Responses adapter and <code>CODEX_LB_API_KEY</code>.
+        Compatible APIs support Responses and Chat Completions; Ollama supports
+        installed local models. The other integrations remain unverified until
+        tested against an available runtime and configured endpoint.
+      </p>
+    </main>
+    <footer>
+      DiffTrial · Original implementation and benchmark suite by Alvin Christian
+      Panio.
+    </footer>
+  </body>
+</html>

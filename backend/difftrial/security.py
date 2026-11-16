@@ -10,6 +10,10 @@ class SetupError(RuntimeError):
     pass
 
 
+class InvalidPatch(SetupError):
+    pass
+
+
 def safe_relative(name: str) -> PurePosixPath:
     path = PurePosixPath(name)
     if (

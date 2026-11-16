@@ -146,3 +146,25 @@ def test_comparisons_separate_different_limits(store, queued):
     assert len(compare(runs)) == 1
     runs[1]["limits"]["command_seconds"] += 1
     assert len(compare(runs)) == 2
+
+
+def test_rejected_patch_retained_and_counted_as_failed_repair(store, queued):
+    ident = queued()
+
+    class InvalidAdapter(DeterministicAdapter):
+        async def generate(self, instructions, context, schema, cancelled):
+            if schema is Proposal:
+                return Generation(
+                    Proposal(
+                        summary="Invalid edit", edits=[{"path": "tests/test_existing.py", "content": "pass"}]
+                    ),
+                    {},
+                )
+            return await super().generate(instructions, context, schema, cancelled)
+
+    Worker(store, FakeRunner, InvalidAdapter).once()
+    bundle = export_bundle(store.detail(ident))
+    assert bundle["run"]["status"] == "failed"
+    assert any(a["name"].startswith("rejected-proposal-") for a in bundle["artifacts"])
+    summary = compare([bundle["run"]])[0]
+    assert summary["eligible"] == 1 and summary["fixed"] == 0 and summary["failed_repairs"] == 1

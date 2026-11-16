@@ -10,7 +10,7 @@ from .db import Attempt, FindingRecord, Run, Store, Task
 from .providers import Cancelled, ProviderError, adapter
 from .runner import DockerRunner, ExecutionError
 from .schemas import Plan, Proposal, ProviderConfig, Review, ValidationRequest
-from .security import SetupError, apply_proposal, source_files, tree_hash
+from .security import InvalidPatch, SetupError, apply_proposal, source_files, tree_hash
 
 RUBRIC = {
     "R01": "Addresses the described issue, not only an observed test failure",
@@ -119,6 +119,11 @@ class Worker:
             stage("setup")
             provider = self.adapter_factory(config)
             original = data_dir() / "tasks" / task.id
+            if (
+                sum(p.stat().st_size for p in original.rglob("*") if p.is_file())
+                > limits.repository_mb * 1024 * 1024
+            ):
+                raise SetupError("Task snapshot exceeds this run's repository size limit")
             if task.source.get("tree_sha256") and tree_hash(original) != task.source["tree_sha256"]:
                 raise SetupError("Task source changed since import; create a new task")
             workspace = data_dir() / "runs" / run_id / "workspace"
@@ -152,7 +157,11 @@ class Worker:
                 # Every attempt is based on the original tree, making each diff independently replayable.
                 for path, content in source_files(original, task.profile).items():
                     (workspace / path).write_text(content, encoding="utf-8", newline="\n")
-                patch = apply_proposal(workspace, proposal, task.profile)
+                try:
+                    patch = apply_proposal(workspace, proposal, task.profile)
+                except SetupError as exc:
+                    emit("patch_rejected", message=str(exc), proposal=proposal.model_dump())
+                    raise InvalidPatch(str(exc)) from exc
                 with self.store.session() as s:
                     attempt = Attempt(run_id=run_id, number=number, patch=patch)
                     s.add(attempt)
@@ -226,7 +235,7 @@ class Worker:
             )
             emit(status, message="Cancelled by user" if explicit else "Run deadline exceeded")
         except (ExecutionError, ProviderError, SetupError) as exc:
-            status = "failed" if isinstance(exc, SetupError) else "infrastructure_error"
+            status = "failed" if isinstance(exc, InvalidPatch) else "infrastructure_error"
             self.store.update(run_id, status=status, stage=status, error=str(exc), finished=time.time())
             emit(status, message=str(exc), code=getattr(exc, "code", "execution"))
         except Exception:
@@ -254,6 +263,7 @@ class Worker:
 
             directory = data_dir() / "runs" / run_id
             directory.mkdir(parents=True, exist_ok=True)
-            (directory / "bundle.json").write_text(
-                json.dumps(export_bundle(self.store.detail(run_id)), indent=2), encoding="utf-8"
-            )
+            bundle = export_bundle(self.store.detail(run_id))
+            (directory / "bundle.json").write_text(json.dumps(bundle, indent=2), encoding="utf-8")
+            for artifact in bundle["artifacts"]:
+                (directory / artifact["name"]).write_text(artifact["content"], encoding="utf-8")

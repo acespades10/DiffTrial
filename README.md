@@ -13,7 +13,7 @@ Runs keep **execution status**, **test outcome**, and **reviewer verdict** separ
 
 ## Local setup
 
-Requires Python 3.11+, Node 22+, npm, and a running **Linux Docker engine**. Docker Desktop works on Windows. Ollama is optional.
+Requires Python 3.11+, Node 22.12+, npm, and a running **Linux Docker engine**. On Windows, use Docker Desktop configured for Linux containers; that installation has not been verified on the development machine. Ollama is optional.
 
 ```sh
 python -m venv .venv
@@ -91,5 +91,7 @@ For a machine with model access but no Docker, [staged evidence recording](docs/
 - [Staged evidence recording](docs/evidence.md)
 - [Design decisions](DESIGN.md)
 - [Validation results](reports/validation.md)
+- [Design delivery checks](reports/design-delivery.md)
+- [Evidence-supported portfolio wording](docs/portfolio.md)
 
 This is an original implementation and original benchmark suite. A separate portfolio project's capability description informed the four-role concept; its code, branding, benchmarks, and reported measurements are not used here.

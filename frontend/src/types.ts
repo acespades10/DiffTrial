@@ -46,6 +46,7 @@ export type Attempt = {
   };
 };
 export type Run = {
+  protocol?: string;
   id: string;
   status: string;
   stage: string;

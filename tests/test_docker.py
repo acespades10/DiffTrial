@@ -50,6 +50,8 @@ def test_full_worker_docker_success_and_unsuccessful(store, queued, benchmark, s
 
 def test_isolation_credentials_and_timeout(monkeypatch):
     monkeypatch.setenv("CODEX_LB_API_KEY", "must-not-enter-container")
+    monkeypatch.setenv("OPENAI_API_KEY", "must-not-enter-container")
+    monkeypatch.setenv("GITHUB_TOKEN", "must-not-enter-container")
     runner = DockerRunner("isolation", Limits(command_seconds=5))
     try:
         name = runner.create(
@@ -57,7 +59,7 @@ def test_isolation_credentials_and_timeout(monkeypatch):
             [
                 "python",
                 "-c",
-                "import os,pathlib,socket; assert os.getuid()==10001; assert 'CODEX_LB_API_KEY' not in os.environ; assert not pathlib.Path('/var/run/docker.sock').exists(); assert pathlib.Path('/proc/self/status').read_text().split('CapEff:')[1].split()[0]=='0000000000000000'; s=socket.socket(); s.settimeout(1); assert s.connect_ex(('1.1.1.1',443)) != 0; print('isolation verified')",
+                "import os,pathlib,socket; assert os.getuid()==10001; assert all(key not in os.environ for key in ('CODEX_LB_API_KEY','OPENAI_API_KEY','GITHUB_TOKEN')); assert not pathlib.Path('/var/run/docker.sock').exists(); assert pathlib.Path('/proc/self/status').read_text().split('CapEff:')[1].split()[0]=='0000000000000000'; s=socket.socket(); s.settimeout(1); assert s.connect_ex(('1.1.1.1',443)) != 0; print('isolation verified')",
             ],
         )
         code, log, _ = runner.execute(name)

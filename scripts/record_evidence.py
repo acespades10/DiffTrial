@@ -202,6 +202,8 @@ def evaluate(candidates, output):
                 message="Docker execution completed; independent model review is pending",
             )
             bundle = export_bundle(store.detail(run_id))
+            bundle["run"]["protocol"] = "staged_ci"
+            bundle["run"]["prompt_version"] = "repair-v1-staged"
             bundles.append(bundle)
         finally:
             runner.close()
@@ -214,6 +216,8 @@ async def review(evaluations, output):
     bundles = load(evaluations)
     for bundle in bundles:
         run = bundle["run"]
+        run["protocol"] = "staged_ci"
+        run["prompt_version"] = "repair-v1-staged"
         if run["provider"]["kind"] == "control":
             review = Review(
                 summary="Deliberately incomplete negative control. Runner confirms that the regression still fails. No model review was requested.",

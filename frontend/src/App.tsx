@@ -112,10 +112,13 @@ function RunDetail({ run, reload }: { run: Run; reload: () => void }) {
   async function exportEvidence() {
     try {
       const result = __DEMO__
-        ? await fetch(`${import.meta.env.BASE_URL}demo/${run.id}.json`).then(async response => {
-            if (!response.ok) throw new Error("Evidence download failed. Please retry.");
-            return response.json();
-          })
+        ? await fetch(`${import.meta.env.BASE_URL}demo/${run.id}.json`).then(
+            async (response) => {
+              if (!response.ok)
+                throw new Error("Evidence download failed. Please retry.");
+              return response.json();
+            },
+          )
         : await api(`/runs/${run.id}/export`);
       download(JSON.stringify(result, null, 2), `difftrial-${run.id}.json`);
     } catch (e) {
@@ -368,6 +371,12 @@ function RunDetail({ run, reload }: { run: Run; reload: () => void }) {
       <details className="provenance">
         <summary>Source provenance and execution limits</summary>
         <dl>
+          <dt>Recording protocol</dt>
+          <dd>
+            {run.protocol === "staged_ci"
+              ? "Local model generation and review; Docker execution on GitHub Actions"
+              : "Local worker"}
+          </dd>
           <dt>Source</dt>
           <dd>
             {run.task.source.repository ? (
@@ -434,8 +443,13 @@ function LocalTools({
     api<{ config: Provider }>("/providers")
       .then((r) => setProvider(r.config))
       .catch((e) => setNotice(e.message));
-    api<{ docker: { message: string }; ollama: { available: boolean } }>("/health")
-      .then((r) => { setDocker(r.docker.message); setOllamaAvailable(r.ollama.available); })
+    api<{ docker: { message: string }; ollama: { available: boolean } }>(
+      "/health",
+    )
+      .then((r) => {
+        setDocker(r.docker.message);
+        setOllamaAvailable(r.ollama.available);
+      })
       .catch((e) => setDocker(e.message));
   }, []);
   function setKind(kind: Provider["kind"]) {
@@ -500,7 +514,11 @@ function LocalTools({
           <h2>Task source</h2>
           <label>
             Source
-            <select aria-label="Source" value={source} onChange={(e) => setSource(e.target.value)}>
+            <select
+              aria-label="Source"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+            >
               <option value="benchmark">Original benchmark</option>
               <option value="github">Public GitHub repository</option>
             </select>
@@ -594,7 +612,7 @@ function LocalTools({
                 onChange={(e) => setCommandLimit(Number(e.target.value))}
               />
             </label>
-            <p>One active run and at most two patch attempts.</p>
+            <p>Default: one active run and at most two patch attempts.</p>
           </details>
         </section>
         <section>
@@ -608,7 +626,11 @@ function LocalTools({
             >
               <option value="codexlb">CodexLB</option>
               <option value="compatible">OpenAI-compatible API</option>
-              <option value="ollama" disabled={!ollamaAvailable}>{ollamaAvailable ? "Ollama" : "Ollama (local runtime unavailable)"}</option>
+              <option value="ollama" disabled={!ollamaAvailable}>
+                {ollamaAvailable
+                  ? "Ollama"
+                  : "Ollama (local runtime unavailable)"}
+              </option>
             </select>
           </label>
           {provider.kind === "compatible" && (
@@ -772,7 +794,15 @@ function LocalTools({
               {notice}
             </p>
           )}
-          <button className="primary" disabled={busy}>
+          {provider.kind === "ollama" && !ollamaAvailable && (
+            <p className="notice">
+              Start Ollama and reload this page, or select another provider.
+            </p>
+          )}
+          <button
+            className="primary"
+            disabled={busy || (provider.kind === "ollama" && !ollamaAvailable)}
+          >
             {busy ? "Working…" : "Queue repair run"}
           </button>
         </div>
@@ -851,11 +881,15 @@ export default function App() {
       : (data?.comparisons ?? []);
   return (
     <div className="app">
-      <a className="skip-link" href="#main" onClick={e => {
-        e.preventDefault();
-        document.getElementById("main")?.focus();
-        document.getElementById("main")?.scrollIntoView();
-      }}>
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+          document.getElementById("main")?.scrollIntoView();
+        }}
+      >
         Skip to content
       </a>
       <header className="app-header">
@@ -1273,11 +1307,12 @@ export default function App() {
                   <aside className="method-note">
                     <h2>Denominators matter</h2>
                     <p>
-                      Fix-rate denominators include completed benchmark runs
-                      with a failing baseline. Cancelled, interrupted,
-                      infrastructure-error runs and imported repositories are
-                      excluded. Review acceptance is not part of the test fix
-                      rate. Compare failures and exclusions alongside the rate.
+                      Fix-rate denominators include completed and rejected-patch
+                      benchmark runs with a failing baseline. Cancelled,
+                      interrupted, infrastructure-error runs and imported
+                      repositories are excluded. Review acceptance is not part
+                      of the test fix rate. Compare failures and exclusions
+                      alongside the rate.
                     </p>
                   </aside>
                 </>
@@ -1293,11 +1328,15 @@ export default function App() {
       <footer>
         <span>DiffTrial · Evidence before conclusions.</span>
         <a
-          href="https://github.com/acespades10/Agentic-Code-Review-Sandbox"
+          href={
+            __DEMO__
+              ? `${import.meta.env.BASE_URL}guide.html`
+              : "https://github.com/acespades10/Agentic-Code-Review-Sandbox"
+          }
           target="_blank"
           rel="noreferrer"
         >
-          Source & setup
+          {__DEMO__ ? "Architecture & methodology" : "Source & setup"}
         </a>
         <span>
           {__DEMO__

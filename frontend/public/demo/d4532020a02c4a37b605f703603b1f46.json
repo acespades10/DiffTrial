@@ -1,0 +1,298 @@
+{
+  "schema_version": "difftrial.bundle.v1",
+  "recorded": true,
+  "run": {
+    "id": "d4532020a02c4a37b605f703603b1f46",
+    "status": "completed",
+    "stage": "completed",
+    "outcome": "fixed",
+    "verdict": "accept",
+    "created": 1794844374.6521044,
+    "started": 1794844374.651917,
+    "finished": 1794844390.9389224,
+    "error": null,
+    "prompt_version": "repair-v1-staged",
+    "rubric_version": "review-v1",
+    "limits": {
+      "attempts": 2,
+      "run_seconds": 900,
+      "command_seconds": 300,
+      "repository_mb": 20,
+      "memory_mb": 512,
+      "cpus": 1
+    },
+    "usage": {
+      "input_tokens": 3793,
+      "output_tokens": 558,
+      "total_tokens": 4351
+    },
+    "provider": {
+      "kind": "codexlb",
+      "transport": "responses",
+      "model": "gpt-6-astra"
+    },
+    "protocol": "staged_ci",
+    "task": {
+      "id": "1c8ee5572d144e979d7e2099be3abc97",
+      "title": "Compare numeric version segments",
+      "issue": "Compare dotted numeric version strings. Return -1, 0 or 1. Missing segments are zero; compare segments numerically, not lexicographically.",
+      "profile": "typescript",
+      "source": {
+        "kind": "benchmark",
+        "version": "1.0.0",
+        "benchmark_id": "ts-versions",
+        "tree_sha256": "263e154b2131a2356a144ea9cd56faf2a3e23d5e35202cc1c295a292f32b68bc",
+        "evaluation": "protected_regression_tests"
+      }
+    },
+    "baseline": {
+      "tests": {
+        "exit_code": 1,
+        "check": "tests",
+        "report_valid": true,
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "duration": 0.968,
+        "network": "none",
+        "executor": "docker",
+        "log": "JSON report written to /tmp/tests.json\n Vitest  fsModuleCache is enabled, but its directory \"/work/node_modules/.vitest-cache\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\n",
+        "cases": [
+          {
+            "name": "existing",
+            "status": "passed"
+          },
+          {
+            "name": "regression",
+            "status": "failed"
+          }
+        ]
+      },
+      "static": {
+        "exit_code": 0,
+        "check": "static",
+        "report_valid": true,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 1.864,
+        "network": "none",
+        "executor": "docker",
+        "log": "",
+        "cases": []
+      }
+    },
+    "attempts": [
+      {
+        "number": 1,
+        "patch": "--- a/src/repair.ts\n+++ b/src/repair.ts\n@@ -2,7 +2,9 @@\n   const left = a.split('.');\n   const right = b.split('.');\n   for (let i = 0; i < Math.max(left.length, right.length); i++) {\n-    const x = left[i] ?? '0', y = right[i] ?? '0';\n+    const x = (left[i] ?? '0').replace(/^0+/, '') || '0';\n+    const y = (right[i] ?? '0').replace(/^0+/, '') || '0';\n+    if (x.length !== y.length) return x.length < y.length ? -1 : 1;\n     if (x !== y) return x < y ? -1 : 1;\n   }\n   return 0;\n",
+        "reports": {
+          "tests": {
+            "exit_code": 0,
+            "check": "tests",
+            "report_valid": true,
+            "passed": 2,
+            "failed": 0,
+            "skipped": 0,
+            "duration": 0.961,
+            "network": "none",
+            "executor": "docker",
+            "log": "JSON report written to /tmp/tests.json\n Vitest  fsModuleCache is enabled, but its directory \"/work/node_modules/.vitest-cache\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\n",
+            "cases": [
+              {
+                "name": "existing",
+                "status": "passed"
+              },
+              {
+                "name": "regression",
+                "status": "passed"
+              }
+            ]
+          },
+          "static": {
+            "exit_code": 0,
+            "check": "static",
+            "report_valid": true,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0,
+            "duration": 1.861,
+            "network": "none",
+            "executor": "docker",
+            "log": "",
+            "cases": []
+          },
+          "regressions": 0
+        },
+        "review": {
+          "summary": "Accept. The patch correctly compares numeric segments by stripping leading zeros, comparing digit counts, then comparing equal-length digit strings. This avoids numeric precision limits, preserves missing-segment-as-zero behavior, and returns only -1, 0, or 1. Changes are narrowly scoped to an existing source file. Supplied test and static reports both exit successfully, with no reported regressions; individual test assertions were not provided.",
+          "verdict": "accept",
+          "findings": []
+        }
+      }
+    ],
+    "events": [
+      {
+        "id": 14,
+        "kind": "role",
+        "created": 1794843766.6822333,
+        "payload": {
+          "role": "planner",
+          "summary": "Fix src/repair.ts to compare dotted numeric segments by value rather than raw string ordering, treating missing segments as zero and preserving exact comparisons for large segments.",
+          "usage": {
+            "input_tokens": 609,
+            "output_tokens": 150,
+            "total_tokens": 759
+          }
+        }
+      },
+      {
+        "id": 15,
+        "kind": "role",
+        "created": 1794843774.4210253,
+        "payload": {
+          "role": "implementer",
+          "summary": "Compare numeric segments exactly by removing leading zeros, then comparing digit counts and equal-length digit strings. Missing segments remain zero; large segments avoid numeric precision loss. Checks could not be run without execution access.",
+          "usage": {
+            "input_tokens": 855,
+            "output_tokens": 220,
+            "total_tokens": 1075
+          }
+        }
+      },
+      {
+        "id": 16,
+        "kind": "role",
+        "created": 1794843779.6952546,
+        "payload": {
+          "role": "validator",
+          "summary": "The proposed change is limited to src/repair.ts and correctly compares numeric segments by normalizing leading zeros, comparing digit counts, then comparing equal-length digit strings. It treats missing segments as zero and avoids precision loss for large segments. No protected files are changed. Source review supports the repair; run tests and static checks to confirm, as no post-change results are available.",
+          "usage": {
+            "input_tokens": 1010,
+            "output_tokens": 88,
+            "total_tokens": 1098
+          }
+        }
+      },
+      {
+        "id": 11,
+        "kind": "tool",
+        "created": 1794844378.241909,
+        "payload": {
+          "tool": "setup",
+          "exit_code": 0,
+          "duration": 3.242,
+          "log": "\nadded 36 packages in 3s\n"
+        }
+      },
+      {
+        "id": 12,
+        "kind": "tool",
+        "created": 1794844382.9478972,
+        "payload": {
+          "tool": "tests",
+          "exit_code": 1,
+          "duration": 0.968
+        }
+      },
+      {
+        "id": 13,
+        "kind": "tool",
+        "created": 1794844385.8945572,
+        "payload": {
+          "tool": "static",
+          "exit_code": 0,
+          "duration": 1.864
+        }
+      },
+      {
+        "id": 17,
+        "kind": "provenance",
+        "created": 1794844385.9003057,
+        "payload": {
+          "message": "Staged experiment: model proposals followed baseline CI run 43898836063; execution CI run 43901081596. No provider credentials were sent to CI."
+        }
+      },
+      {
+        "id": 18,
+        "kind": "tool",
+        "created": 1794844387.988174,
+        "payload": {
+          "tool": "tests",
+          "exit_code": 0,
+          "duration": 0.961
+        }
+      },
+      {
+        "id": 19,
+        "kind": "tool",
+        "created": 1794844390.9366884,
+        "payload": {
+          "tool": "static",
+          "exit_code": 0,
+          "duration": 1.861
+        }
+      },
+      {
+        "id": 20,
+        "kind": "completed",
+        "created": 1794844390.9406044,
+        "payload": {
+          "message": "Docker execution completed; independent model review is pending",
+          "outcome": "fixed"
+        }
+      },
+      {
+        "id": 21,
+        "kind": "role",
+        "created": 1794844581.5378911,
+        "payload": {
+          "role": "reviewer",
+          "summary": "Accept. The patch correctly compares numeric segments by stripping leading zeros, comparing digit counts, then comparing equal-length digit strings. This avoids numeric precision limits, preserves missing-segment-as-zero behavior, and returns only -1, 0, or 1. Changes are narrowly scoped to an existing source file. Supplied test and static reports both exit successfully, with no reported regressions; individual test assertions were not provided.",
+          "usage": {
+            "input_tokens": 1319,
+            "output_tokens": 100,
+            "total_tokens": 1419
+          }
+        }
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "name": "baseline.json",
+      "sha256": "5c8090e7aa890480d8243608d8c4333d3f0468e1e47968652a5e970edb806d1a",
+      "content": "{\n  \"tests\": {\n    \"exit_code\": 1,\n    \"check\": \"tests\",\n    \"report_valid\": true,\n    \"passed\": 1,\n    \"failed\": 1,\n    \"skipped\": 0,\n    \"duration\": 0.968,\n    \"network\": \"none\",\n    \"executor\": \"docker\",\n    \"log\": \"JSON report written to /tmp/tests.json\\n Vitest  fsModuleCache is enabled, but its directory \\\"/work/node_modules/.vitest-cache\\\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\\n\",\n    \"cases\": [\n      {\n        \"name\": \"existing\",\n        \"status\": \"passed\"\n      },\n      {\n        \"name\": \"regression\",\n        \"status\": \"failed\"\n      }\n    ]\n  },\n  \"static\": {\n    \"exit_code\": 0,\n    \"check\": \"static\",\n    \"report_valid\": true,\n    \"passed\": 0,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"duration\": 1.864,\n    \"network\": \"none\",\n    \"executor\": \"docker\",\n    \"log\": \"\",\n    \"cases\": []\n  }\n}"
+    },
+    {
+      "name": "baseline-tests.log",
+      "sha256": "381093c8be05057ac28a941fea291a00e884e4ecda1fd0d39dd0ae8fe032652f",
+      "content": "JSON report written to /tmp/tests.json\n Vitest  fsModuleCache is enabled, but its directory \"/work/node_modules/.vitest-cache\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\n"
+    },
+    {
+      "name": "baseline-static.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": ""
+    },
+    {
+      "name": "attempt-1.diff",
+      "sha256": "d165f1e214c6c31f5c7276427a46eb9c363b9b3576540fd997a50c99e17427c8",
+      "content": "--- a/src/repair.ts\n+++ b/src/repair.ts\n@@ -2,7 +2,9 @@\n   const left = a.split('.');\n   const right = b.split('.');\n   for (let i = 0; i < Math.max(left.length, right.length); i++) {\n-    const x = left[i] ?? '0', y = right[i] ?? '0';\n+    const x = (left[i] ?? '0').replace(/^0+/, '') || '0';\n+    const y = (right[i] ?? '0').replace(/^0+/, '') || '0';\n+    if (x.length !== y.length) return x.length < y.length ? -1 : 1;\n     if (x !== y) return x < y ? -1 : 1;\n   }\n   return 0;\n"
+    },
+    {
+      "name": "attempt-1-reports.json",
+      "sha256": "25319dc4ce992d16dd7312e64982950c9f3e1865c2691ee1ed87294c76c9a42e",
+      "content": "{\n  \"tests\": {\n    \"exit_code\": 0,\n    \"check\": \"tests\",\n    \"report_valid\": true,\n    \"passed\": 2,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"duration\": 0.961,\n    \"network\": \"none\",\n    \"executor\": \"docker\",\n    \"log\": \"JSON report written to /tmp/tests.json\\n Vitest  fsModuleCache is enabled, but its directory \\\"/work/node_modules/.vitest-cache\\\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\\n\",\n    \"cases\": [\n      {\n        \"name\": \"existing\",\n        \"status\": \"passed\"\n      },\n      {\n        \"name\": \"regression\",\n        \"status\": \"passed\"\n      }\n    ]\n  },\n  \"static\": {\n    \"exit_code\": 0,\n    \"check\": \"static\",\n    \"report_valid\": true,\n    \"passed\": 0,\n    \"failed\": 0,\n    \"skipped\": 0,\n    \"duration\": 1.861,\n    \"network\": \"none\",\n    \"executor\": \"docker\",\n    \"log\": \"\",\n    \"cases\": []\n  },\n  \"regressions\": 0\n}"
+    },
+    {
+      "name": "attempt-1-tests.log",
+      "sha256": "381093c8be05057ac28a941fea291a00e884e4ecda1fd0d39dd0ae8fe032652f",
+      "content": "JSON report written to /tmp/tests.json\n Vitest  fsModuleCache is enabled, but its directory \"/work/node_modules/.vitest-cache\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\n"
+    },
+    {
+      "name": "attempt-1-static.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "content": ""
+    }
+  ]
+}

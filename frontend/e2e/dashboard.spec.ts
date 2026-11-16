@@ -109,7 +109,10 @@ async function mock(page: Page, runs = [run]) {
         },
       };
     else if (path.endsWith("/health"))
-      body = { docker: { message: "Test-only Docker status" }, ollama: { available: true } };
+      body = {
+        docker: { message: "Test-only Docker status" },
+        ollama: { available: true },
+      };
     else if (path.endsWith("/tasks")) body = { id: "task" };
     else if (path.endsWith("/models")) body = { models: ["local-test"] };
     else if (path.endsWith("/export")) {
@@ -134,10 +137,14 @@ test("filters, comparison selection, run evidence, downloads and themes", async 
   await mock(page);
   await page.goto("/");
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
+  await expect(
+    page.getByRole("link", { name: "Skip to content" }),
+  ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("main")).toBeFocused();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Every patch has a record.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Every patch has a record.",
+  );
   await page.getByLabel("Find a run").fill("missing");
   await expect(page.getByText("No matching runs")).toBeVisible();
   await page.getByRole("button", { name: "Clear filters" }).click();
@@ -146,7 +153,9 @@ test("filters, comparison selection, run evidence, downloads and themes", async 
   await page.getByLabel("Outcome", { exact: true }).selectOption("all");
   await page.getByRole("checkbox").check();
   await page.getByRole("link", { name: "Compare 1 selected" }).click();
-  await expect(page.locator(".comparison-list dd").first()).toContainText("1 / 1");
+  await expect(page.locator(".comparison-list dd").first()).toContainText(
+    "1 / 1",
+  );
   await page.getByRole("button", { name: "Clear selection" }).click();
   await expect(page.getByText("No comparable evidence yet")).toBeVisible();
   await page.getByRole("link", { name: "Runs", exact: true }).click();
@@ -282,3 +291,44 @@ for (const width of [390, 768, 1024, 1440]) {
     ).toBe(true);
   });
 }
+
+test("active cancellation, attempt selection and 200 percent text remain usable", async ({
+  page,
+}) => {
+  const active = {
+    ...run,
+    status: "running",
+    stage: "testing",
+    attempts: [
+      ...run.attempts,
+      {
+        ...run.attempts[0],
+        number: 2,
+        patch:
+          "--- a/src/repair.py\n+++ b/src/repair.py\n@@ -1 +1 @@\n-return 0\n+return 2\n",
+      },
+    ],
+  };
+  await mock(page, [active]);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto(`/#runs/${active.id}`);
+  await expect(page.locator(".diff")).toContainText("+return 2");
+  await page.getByLabel("Attempt", { exact: true }).selectOption("0");
+  await expect(page.locator(".diff")).toContainText("+return 1");
+  await page.getByRole("button", { name: "Cancel run" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Cancellation requested",
+  );
+  await page.addStyleTag({ content: "html { font-size: 200% }" });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.getByRole("link", { name: "Runs", exact: true }).first().click();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});

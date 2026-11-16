@@ -1,7 +1,736 @@
 {
   "schema_version": "difftrial.demo.v1",
   "recorded": true,
-  "runs": [],
+  "runs": [
+    {
+      "id": "46ac33669c064c7ca8475e0a870e3fed",
+      "status": "completed",
+      "stage": "completed",
+      "outcome": "fixed",
+      "verdict": "accept",
+      "created": 1794844367.5448866,
+      "started": 1794844367.543215,
+      "finished": 1794844374.2833886,
+      "error": null,
+      "prompt_version": "repair-v1-staged",
+      "rubric_version": "review-v1",
+      "limits": {
+        "attempts": 2,
+        "run_seconds": 900,
+        "command_seconds": 300,
+        "repository_mb": 20,
+        "memory_mb": 512,
+        "cpus": 1
+      },
+      "usage": {
+        "input_tokens": 4264,
+        "output_tokens": 491,
+        "total_tokens": 4755
+      },
+      "provider": {
+        "kind": "codexlb",
+        "transport": "responses",
+        "model": "gpt-6-astra"
+      },
+      "protocol": "staged_ci",
+      "task": {
+        "id": "8036cfc7665e4edfb81cc75a1b17ba5e",
+        "title": "Merge touching intervals",
+        "issue": "Merge sorted or unsorted closed intervals, including intervals that share an endpoint. Do not mutate the input.",
+        "profile": "python",
+        "source": {
+          "kind": "benchmark",
+          "version": "1.0.0",
+          "benchmark_id": "py-intervals",
+          "tree_sha256": "0cba775def1b9d19e480452ee668ec9e0fd55c87a019ec23daac97f19b197464",
+          "evaluation": "protected_regression_tests"
+        }
+      },
+      "baseline": {
+        "tests": {
+          "exit_code": 1,
+          "check": "tests",
+          "report_valid": true,
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "duration": 0.502,
+          "network": "none",
+          "executor": "docker",
+          "log": ".F                                                                       [100%]\n=================================== FAILURES ===================================\n_______________________________ test_regression ________________________________\n\n    def test_regression():\n>       assert repair([[4, 7], [1, 4], [9, 9]]) == [[1, 7], [9, 9]]\nE       assert [[1, 4], [4, 7], [9, 9]] == [[1, 7], [9, 9]]\nE         \nE         At index 0 diff: [1, 4] != [1, 7]\nE         Left contains one more item: [9, 9]\nE         Use -v to get more diff\n\ntests/test_regression.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_regression.py::test_regression - assert [[1, 4], [4, 7], [9...\n1 failed, 1 passed in 0.03s\n",
+          "cases": [
+            {
+              "name": "test_existing::test_existing",
+              "status": "passed"
+            },
+            {
+              "name": "test_regression::test_regression",
+              "status": "failed"
+            }
+          ]
+        },
+        "static": {
+          "exit_code": 0,
+          "check": "static",
+          "report_valid": true,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "duration": 0.279,
+          "network": "none",
+          "executor": "docker",
+          "log": "All checks passed!\n",
+          "cases": []
+        }
+      },
+      "attempts": [
+        {
+          "number": 1,
+          "patch": "--- a/src/repair.py\n+++ b/src/repair.py\n@@ -1,7 +1,7 @@\n def repair(items):\n     result = []\n     for start, end in sorted(items):\n-        if result and start < result[-1][1]:\n+        if result and start <= result[-1][1]:\n             result[-1][1] = max(result[-1][1], end)\n         else:\n             result.append([start, end])\n",
+          "reports": {
+            "tests": {
+              "exit_code": 0,
+              "check": "tests",
+              "report_valid": true,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0,
+              "duration": 0.507,
+              "network": "none",
+              "executor": "docker",
+              "log": "..                                                                       [100%]\n2 passed in 0.01s\n",
+              "cases": [
+                {
+                  "name": "test_existing::test_existing",
+                  "status": "passed"
+                },
+                {
+                  "name": "test_regression::test_regression",
+                  "status": "passed"
+                }
+              ]
+            },
+            "static": {
+              "exit_code": 0,
+              "check": "static",
+              "report_valid": true,
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0,
+              "duration": 0.275,
+              "network": "none",
+              "executor": "docker",
+              "log": "All checks passed!\n",
+              "cases": []
+            },
+            "regressions": 0
+          },
+          "review": {
+            "summary": "Accept. Changing the overlap comparison to <= correctly merges closed intervals that share an endpoint, including chained merges. Sorting continues to support unsorted input without modifying it, and newly allocated result intervals avoid mutating input intervals. Empty-input behavior and output ordering remain unchanged. The patch modifies only the permitted source file and is narrowly scoped. Reported tests and static checks pass with no regressions; only two tests are reported, so coverage is limited, but the change directly implements the required boundary semantics.",
+            "verdict": "accept",
+            "findings": []
+          }
+        }
+      ],
+      "events": [
+        {
+          "id": 4,
+          "kind": "role",
+          "created": 1794843748.551024,
+          "payload": {
+            "role": "planner",
+            "summary": "The merge condition excludes shared endpoints. Change it to include equality for closed intervals, preserving sorting and fresh output lists so the input remains unchanged. The static-check failure is environmental and does not warrant configuration changes.",
+            "usage": {
+              "input_tokens": 788,
+              "output_tokens": 155,
+              "total_tokens": 943
+            }
+          }
+        },
+        {
+          "id": 5,
+          "kind": "role",
+          "created": 1794843753.7709808,
+          "payload": {
+            "role": "implementer",
+            "summary": "Updated the merge condition to include shared endpoints for closed intervals. Sorting and newly allocated output intervals preserve the input without mutation. Tests could not be rerun because execution is unavailable.",
+            "usage": {
+              "input_tokens": 1038,
+              "output_tokens": 130,
+              "total_tokens": 1168
+            }
+          }
+        },
+        {
+          "id": 6,
+          "kind": "role",
+          "created": 1794843758.9472053,
+          "payload": {
+            "role": "validator",
+            "summary": "The proposed change correctly merges closed intervals that share an endpoint by using <=. Sorting handles unsorted input, the maximum-end update handles nested overlaps, and fresh output lists avoid mutating input intervals. The edit is confined to the permitted src/repair.py file. Request tests to confirm the regression and existing behavior; no checks were executed here. The baseline static failure is environmental, not a code finding.",
+            "usage": {
+              "input_tokens": 1103,
+              "output_tokens": 92,
+              "total_tokens": 1195
+            }
+          }
+        },
+        {
+          "id": 1,
+          "kind": "tool",
+          "created": 1794844368.7659156,
+          "payload": {
+            "tool": "setup",
+            "exit_code": 0,
+            "duration": 0.721,
+            "log": ""
+          }
+        },
+        {
+          "id": 2,
+          "kind": "tool",
+          "created": 1794844370.7045724,
+          "payload": {
+            "tool": "tests",
+            "exit_code": 1,
+            "duration": 0.502
+          }
+        },
+        {
+          "id": 3,
+          "kind": "tool",
+          "created": 1794844371.8050277,
+          "payload": {
+            "tool": "static",
+            "exit_code": 0,
+            "duration": 0.279
+          }
+        },
+        {
+          "id": 7,
+          "kind": "provenance",
+          "created": 1794844371.8137176,
+          "payload": {
+            "message": "Staged experiment: model proposals followed baseline CI run 43898836063; execution CI run 43901081596. No provider credentials were sent to CI."
+          }
+        },
+        {
+          "id": 8,
+          "kind": "tool",
+          "created": 1794844373.1628668,
+          "payload": {
+            "tool": "tests",
+            "exit_code": 0,
+            "duration": 0.507
+          }
+        },
+        {
+          "id": 9,
+          "kind": "tool",
+          "created": 1794844374.2806695,
+          "payload": {
+            "tool": "static",
+            "exit_code": 0,
+            "duration": 0.275
+          }
+        },
+        {
+          "id": 10,
+          "kind": "completed",
+          "created": 1794844374.2853343,
+          "payload": {
+            "message": "Docker execution completed; independent model review is pending",
+            "outcome": "fixed"
+          }
+        },
+        {
+          "id": 11,
+          "kind": "role",
+          "created": 1794844574.904449,
+          "payload": {
+            "role": "reviewer",
+            "summary": "Accept. Changing the overlap comparison to <= correctly merges closed intervals that share an endpoint, including chained merges. Sorting continues to support unsorted input without modifying it, and newly allocated result intervals avoid mutating input intervals. Empty-input behavior and output ordering remain unchanged. The patch modifies only the permitted source file and is narrowly scoped. Reported tests and static checks pass with no regressions; only two tests are reported, so coverage is limited, but the change directly implements the required boundary semantics.",
+            "usage": {
+              "input_tokens": 1335,
+              "output_tokens": 114,
+              "total_tokens": 1449
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d4532020a02c4a37b605f703603b1f46",
+      "status": "completed",
+      "stage": "completed",
+      "outcome": "fixed",
+      "verdict": "accept",
+      "created": 1794844374.6521044,
+      "started": 1794844374.651917,
+      "finished": 1794844390.9389224,
+      "error": null,
+      "prompt_version": "repair-v1-staged",
+      "rubric_version": "review-v1",
+      "limits": {
+        "attempts": 2,
+        "run_seconds": 900,
+        "command_seconds": 300,
+        "repository_mb": 20,
+        "memory_mb": 512,
+        "cpus": 1
+      },
+      "usage": {
+        "input_tokens": 3793,
+        "output_tokens": 558,
+        "total_tokens": 4351
+      },
+      "provider": {
+        "kind": "codexlb",
+        "transport": "responses",
+        "model": "gpt-6-astra"
+      },
+      "protocol": "staged_ci",
+      "task": {
+        "id": "1c8ee5572d144e979d7e2099be3abc97",
+        "title": "Compare numeric version segments",
+        "issue": "Compare dotted numeric version strings. Return -1, 0 or 1. Missing segments are zero; compare segments numerically, not lexicographically.",
+        "profile": "typescript",
+        "source": {
+          "kind": "benchmark",
+          "version": "1.0.0",
+          "benchmark_id": "ts-versions",
+          "tree_sha256": "263e154b2131a2356a144ea9cd56faf2a3e23d5e35202cc1c295a292f32b68bc",
+          "evaluation": "protected_regression_tests"
+        }
+      },
+      "baseline": {
+        "tests": {
+          "exit_code": 1,
+          "check": "tests",
+          "report_valid": true,
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "duration": 0.968,
+          "network": "none",
+          "executor": "docker",
+          "log": "JSON report written to /tmp/tests.json\n Vitest  fsModuleCache is enabled, but its directory \"/work/node_modules/.vitest-cache\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\n",
+          "cases": [
+            {
+              "name": "existing",
+              "status": "passed"
+            },
+            {
+              "name": "regression",
+              "status": "failed"
+            }
+          ]
+        },
+        "static": {
+          "exit_code": 0,
+          "check": "static",
+          "report_valid": true,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "duration": 1.864,
+          "network": "none",
+          "executor": "docker",
+          "log": "",
+          "cases": []
+        }
+      },
+      "attempts": [
+        {
+          "number": 1,
+          "patch": "--- a/src/repair.ts\n+++ b/src/repair.ts\n@@ -2,7 +2,9 @@\n   const left = a.split('.');\n   const right = b.split('.');\n   for (let i = 0; i < Math.max(left.length, right.length); i++) {\n-    const x = left[i] ?? '0', y = right[i] ?? '0';\n+    const x = (left[i] ?? '0').replace(/^0+/, '') || '0';\n+    const y = (right[i] ?? '0').replace(/^0+/, '') || '0';\n+    if (x.length !== y.length) return x.length < y.length ? -1 : 1;\n     if (x !== y) return x < y ? -1 : 1;\n   }\n   return 0;\n",
+          "reports": {
+            "tests": {
+              "exit_code": 0,
+              "check": "tests",
+              "report_valid": true,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0,
+              "duration": 0.961,
+              "network": "none",
+              "executor": "docker",
+              "log": "JSON report written to /tmp/tests.json\n Vitest  fsModuleCache is enabled, but its directory \"/work/node_modules/.vitest-cache\" could not be created (ENOENT: no such file or directory, mkdir '/work/node_modules/.vitest-cache'). Continuing without caching modules on disk. Set `fsModuleCache: false` to disable the cache and this warning.\n",
+              "cases": [
+                {
+                  "name": "existing",
+                  "status": "passed"
+                },
+                {
+                  "name": "regression",
+                  "status": "passed"
+                }
+              ]
+            },
+            "static": {
+              "exit_code": 0,
+              "check": "static",
+              "report_valid": true,
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0,
+              "duration": 1.861,
+              "network": "none",
+              "executor": "docker",
+              "log": "",
+              "cases": []
+            },
+            "regressions": 0
+          },
+          "review": {
+            "summary": "Accept. The patch correctly compares numeric segments by stripping leading zeros, comparing digit counts, then comparing equal-length digit strings. This avoids numeric precision limits, preserves missing-segment-as-zero behavior, and returns only -1, 0, or 1. Changes are narrowly scoped to an existing source file. Supplied test and static reports both exit successfully, with no reported regressions; individual test assertions were not provided.",
+            "verdict": "accept",
+            "findings": []
+          }
+        }
+      ],
+      "events": [
+        {
+          "id": 14,
+          "kind": "role",
+          "created": 1794843766.6822333,
+          "payload": {
+            "role": "planner",
+            "summary": "Fix src/repair.ts to compare dotted numeric segments by value rather than raw string ordering, treating missing segments as zero and preserving exact comparisons for large segments.",
+            "usage": {
+              "input_tokens": 609,
+              "output_tokens": 150,
+              "total_tokens": 759
+            }
+          }
+        },
+        {
+          "id": 15,
+          "kind": "role",
+          "created": 1794843774.4210253,
+          "payload": {
+            "role": "implementer",
+            "summary": "Compare numeric segments exactly by removing leading zeros, then comparing digit counts and equal-length digit strings. Missing segments remain zero; large segments avoid numeric precision loss. Checks could not be run without execution access.",
+            "usage": {
+              "input_tokens": 855,
+              "output_tokens": 220,
+              "total_tokens": 1075
+            }
+          }
+        },
+        {
+          "id": 16,
+          "kind": "role",
+          "created": 1794843779.6952546,
+          "payload": {
+            "role": "validator",
+            "summary": "The proposed change is limited to src/repair.ts and correctly compares numeric segments by normalizing leading zeros, comparing digit counts, then comparing equal-length digit strings. It treats missing segments as zero and avoids precision loss for large segments. No protected files are changed. Source review supports the repair; run tests and static checks to confirm, as no post-change results are available.",
+            "usage": {
+              "input_tokens": 1010,
+              "output_tokens": 88,
+              "total_tokens": 1098
+            }
+          }
+        },
+        {
+          "id": 11,
+          "kind": "tool",
+          "created": 1794844378.241909,
+          "payload": {
+            "tool": "setup",
+            "exit_code": 0,
+            "duration": 3.242,
+            "log": "\nadded 36 packages in 3s\n"
+          }
+        },
+        {
+          "id": 12,
+          "kind": "tool",
+          "created": 1794844382.9478972,
+          "payload": {
+            "tool": "tests",
+            "exit_code": 1,
+            "duration": 0.968
+          }
+        },
+        {
+          "id": 13,
+          "kind": "tool",
+          "created": 1794844385.8945572,
+          "payload": {
+            "tool": "static",
+            "exit_code": 0,
+            "duration": 1.864
+          }
+        },
+        {
+          "id": 17,
+          "kind": "provenance",
+          "created": 1794844385.9003057,
+          "payload": {
+            "message": "Staged experiment: model proposals followed baseline CI run 43898836063; execution CI run 43901081596. No provider credentials were sent to CI."
+          }
+        },
+        {
+          "id": 18,
+          "kind": "tool",
+          "created": 1794844387.988174,
+          "payload": {
+            "tool": "tests",
+            "exit_code": 0,
+            "duration": 0.961
+          }
+        },
+        {
+          "id": 19,
+          "kind": "tool",
+          "created": 1794844390.9366884,
+          "payload": {
+            "tool": "static",
+            "exit_code": 0,
+            "duration": 1.861
+          }
+        },
+        {
+          "id": 20,
+          "kind": "completed",
+          "created": 1794844390.9406044,
+          "payload": {
+            "message": "Docker execution completed; independent model review is pending",
+            "outcome": "fixed"
+          }
+        },
+        {
+          "id": 21,
+          "kind": "role",
+          "created": 1794844581.5378911,
+          "payload": {
+            "role": "reviewer",
+            "summary": "Accept. The patch correctly compares numeric segments by stripping leading zeros, comparing digit counts, then comparing equal-length digit strings. This avoids numeric precision limits, preserves missing-segment-as-zero behavior, and returns only -1, 0, or 1. Changes are narrowly scoped to an existing source file. Supplied test and static reports both exit successfully, with no reported regressions; individual test assertions were not provided.",
+            "usage": {
+              "input_tokens": 1319,
+              "output_tokens": 100,
+              "total_tokens": 1419
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "3880e7b3397843a885d71cfd8678566c",
+      "status": "completed",
+      "stage": "completed",
+      "outcome": "failing",
+      "verdict": "reject",
+      "created": 1794844391.5919988,
+      "started": 1794844391.5917833,
+      "finished": 1794844398.1953058,
+      "error": null,
+      "prompt_version": "repair-v1-staged",
+      "rubric_version": "review-v1",
+      "limits": {
+        "attempts": 2,
+        "run_seconds": 900,
+        "command_seconds": 300,
+        "repository_mb": 20,
+        "memory_mb": 512,
+        "cpus": 1
+      },
+      "usage": {},
+      "provider": {
+        "kind": "control",
+        "transport": "none",
+        "model": "deliberately-incomplete-patch"
+      },
+      "protocol": "staged_ci",
+      "task": {
+        "id": "c6686942bb354b929b5c435c23a9aaf5",
+        "title": "Merge touching intervals",
+        "issue": "Merge sorted or unsorted closed intervals, including intervals that share an endpoint. Do not mutate the input.",
+        "profile": "python",
+        "source": {
+          "kind": "benchmark",
+          "version": "1.0.0",
+          "benchmark_id": "py-intervals",
+          "tree_sha256": "0cba775def1b9d19e480452ee668ec9e0fd55c87a019ec23daac97f19b197464",
+          "evaluation": "protected_regression_tests"
+        }
+      },
+      "baseline": {
+        "tests": {
+          "exit_code": 1,
+          "check": "tests",
+          "report_valid": true,
+          "passed": 1,
+          "failed": 1,
+          "skipped": 0,
+          "duration": 0.51,
+          "network": "none",
+          "executor": "docker",
+          "log": ".F                                                                       [100%]\n=================================== FAILURES ===================================\n_______________________________ test_regression ________________________________\n\n    def test_regression():\n>       assert repair([[4, 7], [1, 4], [9, 9]]) == [[1, 7], [9, 9]]\nE       assert [[1, 4], [4, 7], [9, 9]] == [[1, 7], [9, 9]]\nE         \nE         At index 0 diff: [1, 4] != [1, 7]\nE         Left contains one more item: [9, 9]\nE         Use -v to get more diff\n\ntests/test_regression.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_regression.py::test_regression - assert [[1, 4], [4, 7], [9...\n1 failed, 1 passed in 0.03s\n",
+          "cases": [
+            {
+              "name": "test_existing::test_existing",
+              "status": "passed"
+            },
+            {
+              "name": "test_regression::test_regression",
+              "status": "failed"
+            }
+          ]
+        },
+        "static": {
+          "exit_code": 0,
+          "check": "static",
+          "report_valid": true,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "duration": 0.281,
+          "network": "none",
+          "executor": "docker",
+          "log": "All checks passed!\n",
+          "cases": []
+        }
+      },
+      "attempts": [
+        {
+          "number": 1,
+          "patch": "--- a/src/repair.py\n+++ b/src/repair.py\n@@ -6,3 +6,5 @@\n         else:\n             result.append([start, end])\n     return result\n+\n+# Negative control: the boundary comparison is unchanged.\n",
+          "reports": {
+            "tests": {
+              "exit_code": 1,
+              "check": "tests",
+              "report_valid": true,
+              "passed": 1,
+              "failed": 1,
+              "skipped": 0,
+              "duration": 0.504,
+              "network": "none",
+              "executor": "docker",
+              "log": ".F                                                                       [100%]\n=================================== FAILURES ===================================\n_______________________________ test_regression ________________________________\n\n    def test_regression():\n>       assert repair([[4, 7], [1, 4], [9, 9]]) == [[1, 7], [9, 9]]\nE       assert [[1, 4], [4, 7], [9, 9]] == [[1, 7], [9, 9]]\nE         \nE         At index 0 diff: [1, 4] != [1, 7]\nE         Left contains one more item: [9, 9]\nE         Use -v to get more diff\n\ntests/test_regression.py:4: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_regression.py::test_regression - assert [[1, 4], [4, 7], [9...\n1 failed, 1 passed in 0.03s\n",
+              "cases": [
+                {
+                  "name": "test_existing::test_existing",
+                  "status": "passed"
+                },
+                {
+                  "name": "test_regression::test_regression",
+                  "status": "failed"
+                }
+              ]
+            },
+            "static": {
+              "exit_code": 0,
+              "check": "static",
+              "report_valid": true,
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0,
+              "duration": 0.282,
+              "network": "none",
+              "executor": "docker",
+              "log": "All checks passed!\n",
+              "cases": []
+            },
+            "regressions": 0
+          },
+          "review": {
+            "summary": "Deliberately incomplete negative control. Runner confirms that the regression still fails. No model review was requested.",
+            "verdict": "reject",
+            "findings": [
+              {
+                "rule": "R01",
+                "severity": "error",
+                "message": "Comment-only patch leaves the issue unresolved.",
+                "path": null
+              }
+            ]
+          }
+        }
+      ],
+      "events": [
+        {
+          "id": 21,
+          "kind": "tool",
+          "created": 1794844392.6847715,
+          "payload": {
+            "tool": "setup",
+            "exit_code": 0,
+            "duration": 0.731,
+            "log": ""
+          }
+        },
+        {
+          "id": 22,
+          "kind": "tool",
+          "created": 1794844394.6169393,
+          "payload": {
+            "tool": "tests",
+            "exit_code": 1,
+            "duration": 0.51
+          }
+        },
+        {
+          "id": 23,
+          "kind": "tool",
+          "created": 1794844395.725672,
+          "payload": {
+            "tool": "static",
+            "exit_code": 0,
+            "duration": 0.281
+          }
+        },
+        {
+          "id": 24,
+          "kind": "provenance",
+          "created": 1794844395.7283897,
+          "payload": {
+            "message": "Staged experiment: model proposals followed baseline CI run 43898836063; execution CI run 43901081596. No provider credentials were sent to CI."
+          }
+        },
+        {
+          "id": 25,
+          "kind": "tool",
+          "created": 1794844397.066783,
+          "payload": {
+            "tool": "tests",
+            "exit_code": 1,
+            "duration": 0.504
+          }
+        },
+        {
+          "id": 26,
+          "kind": "tool",
+          "created": 1794844398.193344,
+          "payload": {
+            "tool": "static",
+            "exit_code": 0,
+            "duration": 0.282
+          }
+        },
+        {
+          "id": 27,
+          "kind": "completed",
+          "created": 1794844398.1975207,
+          "payload": {
+            "message": "Docker execution completed; independent model review is pending",
+            "outcome": "failing"
+          }
+        },
+        {
+          "id": 28,
+          "kind": "role",
+          "created": 1794844581.5654168,
+          "payload": {
+            "role": "negative control",
+            "summary": "Deliberately incomplete negative control. Runner confirms that the regression still fails. No model review was requested.",
+            "usage": {}
+          }
+        }
+      ]
+    }
+  ],
   "benchmarks": [
     {
       "id": "py-intervals",
@@ -136,5 +865,60 @@
       "category": "boundary_and_data_integrity"
     }
   ],
-  "comparisons": []
+  "comparisons": [
+    {
+      "cohort": "ac6d2f420362",
+      "task": "Merge touching intervals",
+      "version": "1.0.0",
+      "provider": "codexlb",
+      "model": "gpt-6-astra",
+      "total": 1,
+      "eligible": 1,
+      "fixed": 1,
+      "fix_rate": 1.0,
+      "regressions": 0,
+      "infrastructure_errors": 0,
+      "failed_repairs": 0,
+      "duration_seconds": 6.740173578262329,
+      "input_tokens": 4264,
+      "output_tokens": 491,
+      "usage_available_runs": 1
+    },
+    {
+      "cohort": "ac6d2f420362",
+      "task": "Merge touching intervals",
+      "version": "1.0.0",
+      "provider": "control",
+      "model": "deliberately-incomplete-patch",
+      "total": 1,
+      "eligible": 1,
+      "fixed": 0,
+      "fix_rate": 0.0,
+      "regressions": 0,
+      "infrastructure_errors": 0,
+      "failed_repairs": 1,
+      "duration_seconds": 6.603522539138794,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "usage_available_runs": 0
+    },
+    {
+      "cohort": "a2f69472fa0e",
+      "task": "Compare numeric version segments",
+      "version": "1.0.0",
+      "provider": "codexlb",
+      "model": "gpt-6-astra",
+      "total": 1,
+      "eligible": 1,
+      "fixed": 1,
+      "fix_rate": 1.0,
+      "regressions": 0,
+      "infrastructure_errors": 0,
+      "failed_repairs": 0,
+      "duration_seconds": 16.28700542449951,
+      "input_tokens": 3793,
+      "output_tokens": 558,
+      "usage_available_runs": 1
+    }
+  ]
 }

@@ -8,6 +8,7 @@ export function compareSelected(runs: Run[]): Comparison[] {
       run.limits,
       run.prompt_version,
       run.rubric_version,
+      run.protocol ?? "local_worker",
       run.provider.kind,
       run.provider.model,
     ]);
@@ -17,7 +18,7 @@ export function compareSelected(runs: Run[]): Comparison[] {
     const first = group[0];
     const eligible = group.filter(
       (r) =>
-        r.status === "completed" &&
+        ["completed", "failed"].includes(r.status) &&
         r.task.source.kind === "benchmark" &&
         (r.baseline.tests?.failed ?? 0) > 0,
     );

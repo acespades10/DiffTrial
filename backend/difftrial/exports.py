@@ -75,6 +75,7 @@ def export_bundle(detail):
         ),
     )
     run["provider"] = subset(detail["provider"], ("kind", "transport", "model"))
+    run["protocol"] = detail.get("protocol", "local_worker")
     provider = detail["provider"]
     if (
         provider.get("input_price_per_million") is not None
@@ -132,11 +133,31 @@ def export_bundle(detail):
         }
         for e in detail["events"]
     ]
+    for original, exported in zip(detail["events"], run["events"]):
+        if original["kind"] == "patch_rejected" and isinstance(original["payload"].get("proposal"), dict):
+            proposal = original["payload"]["proposal"]
+            exported["payload"]["proposal"] = {
+                "summary": proposal.get("summary", ""),
+                "edits": [subset(edit, ("path", "content")) for edit in proposal.get("edits", [])],
+            }
     run = redact(run)
     artifacts = {"baseline.json": json.dumps(run["baseline"], indent=2)}
+    for check in ("tests", "static"):
+        if check in run["baseline"]:
+            artifacts[f"baseline-{check}.log"] = run["baseline"][check].get("log", "")
     for attempt in run["attempts"]:
         artifacts[f"attempt-{attempt['number']}.diff"] = attempt["patch"]
         artifacts[f"attempt-{attempt['number']}-reports.json"] = json.dumps(attempt["reports"], indent=2)
+        for check in ("tests", "static"):
+            if check in attempt["reports"]:
+                artifacts[f"attempt-{attempt['number']}-{check}.log"] = attempt["reports"][check].get(
+                    "log", ""
+                )
+    for event in run["events"]:
+        if event["kind"] == "patch_rejected" and "proposal" in event["payload"]:
+            artifacts[f"rejected-proposal-{event['id']}.json"] = json.dumps(
+                event["payload"]["proposal"], indent=2
+            )
     return {
         "schema_version": "difftrial.bundle.v1",
         "recorded": True,
@@ -157,6 +178,7 @@ def compare(runs):
                 "limits": run["limits"],
                 "prompt": run["prompt_version"],
                 "rubric": run["rubric_version"],
+                "protocol": run.get("protocol", "local_worker"),
             },
             sort_keys=True,
         )
@@ -168,7 +190,7 @@ def compare(runs):
             eligible = [
                 r
                 for r in selected
-                if r["status"] == "completed"
+                if r["status"] in {"completed", "failed"}
                 and r["task"]["source"]["kind"] == "benchmark"
                 and r["baseline"].get("tests", {}).get("failed", 0) > 0
             ]

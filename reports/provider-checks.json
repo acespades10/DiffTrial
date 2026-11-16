@@ -1,0 +1,23 @@
+[
+  {
+    "provider": "codexlb",
+    "verified": true,
+    "model": "gpt-6-astra",
+    "transport": "responses",
+    "usage": {
+      "input_tokens": 72,
+      "output_tokens": 9,
+      "total_tokens": 81
+    }
+  },
+  {
+    "provider": "compatible",
+    "verified": false,
+    "message": "No separate endpoint, model and credential configured"
+  },
+  {
+    "provider": "ollama",
+    "verified": false,
+    "message": "Ollama is unavailable or returned an invalid model list"
+  }
+]
