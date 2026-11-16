@@ -1,0 +1,31 @@
+name: Record Docker evidence
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        options: [baseline, evaluate]
+        default: baseline
+        required: true
+permissions:
+  contents: read
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e .
+      - run: difftrial build-runners
+      - if: inputs.phase == 'baseline'
+        run: python scripts/record_evidence.py baseline --output reports/baselines.json
+      - if: inputs.phase == 'evaluate'
+        run: python scripts/record_evidence.py evaluate --input evidence/candidates.json --output reports/evaluations.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recorded-evidence
+          path: reports/*.json

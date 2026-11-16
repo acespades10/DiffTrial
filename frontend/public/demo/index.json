@@ -1,0 +1,140 @@
+{
+  "schema_version": "difftrial.demo.v1",
+  "recorded": true,
+  "runs": [],
+  "benchmarks": [
+    {
+      "id": "py-intervals",
+      "title": "Merge touching intervals",
+      "profile": "python",
+      "issue": "Merge sorted or unsorted closed intervals, including intervals that share an endpoint. Do not mutate the input.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "py-weighted",
+      "title": "Honor zero weights",
+      "profile": "python",
+      "issue": "Return the weighted mean of (value, weight) pairs. Zero weights contribute nothing. Reject a nonpositive total weight with ValueError.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "py-pages",
+      "title": "Keep the final partial page",
+      "profile": "python",
+      "issue": "Split values into pages of size n. Retain a partial final page. Reject n <= 0 with ValueError.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "py-expiry",
+      "title": "Expire at the deadline",
+      "profile": "python",
+      "issue": "Return keys whose expiration time is strictly later than now. A key expires exactly at its deadline; preserve insertion order.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "py-unicode",
+      "title": "Match Unicode identifiers",
+      "profile": "python",
+      "issue": "Group identifiers case-insensitively using Unicode casefold after NFC normalization. Preserve the original strings and insertion order in each group.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "py-ledger",
+      "title": "Retain zero-value ledger entries",
+      "profile": "python",
+      "issue": "Return entries with a non-null amount. Zero is a valid amount. Do not mutate entries or drop negative adjustments.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "ts-versions",
+      "title": "Compare numeric version segments",
+      "profile": "typescript",
+      "issue": "Compare dotted numeric version strings. Return -1, 0 or 1. Missing segments are zero; compare segments numerically, not lexicographically.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "ts-capacity",
+      "title": "Respect an empty queue capacity",
+      "profile": "typescript",
+      "issue": "Return up to capacity values from the start. Capacity zero returns no items, and negative capacity raises RangeError.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "ts-dates",
+      "title": "Advance dates across month boundaries",
+      "profile": "typescript",
+      "issue": "Given an ISO UTC date, return the ISO UTC date the next day. Handle month, year and leap-day boundaries without using local time.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "ts-records",
+      "title": "Keep the newest duplicate record",
+      "profile": "typescript",
+      "issue": "Deduplicate records by id, retaining the last value for each id. The order of ids follows their first appearance. Do not mutate input.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "ts-chunks",
+      "title": "Keep a trailing chunk",
+      "profile": "typescript",
+      "issue": "Split items into chunks of positive integer size. Keep a partial final chunk and reject zero, negative or fractional sizes with RangeError.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    },
+    {
+      "id": "ts-average",
+      "title": "Divide a partial window correctly",
+      "profile": "typescript",
+      "issue": "Return a trailing moving average for each position using up to window items. Divide by the available item count in the initial partial windows. Reject nonpositive or fractional windows.",
+      "version": "1.0.0",
+      "protected_tests": [
+        "tests/"
+      ],
+      "category": "boundary_and_data_integrity"
+    }
+  ],
+  "comparisons": []
+}

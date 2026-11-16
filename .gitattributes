@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Consistent bytes keep source provenance hashes stable across Windows and CI.
+* text=auto eol=lf

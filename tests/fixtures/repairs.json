@@ -1,0 +1,50 @@
+{
+  "py-intervals": {
+    "path": "src/repair.py",
+    "content": "def repair(items):\n    result = []\n    for start, end in sorted(items):\n        if result and start <= result[-1][1]:\n            result[-1][1] = max(result[-1][1], end)\n        else:\n            result.append([start, end])\n    return result\n"
+  },
+  "py-weighted": {
+    "path": "src/repair.py",
+    "content": "def repair(items):\n    total = sum(weight for _, weight in items)\n    if total <= 0:\n        raise ValueError('positive total required')\n    return sum(value * (weight) for value, weight in items) / total\n"
+  },
+  "py-pages": {
+    "path": "src/repair.py",
+    "content": "def repair(values, n):\n    if n <= 0:\n        raise ValueError('positive size required')\n    return [values[i:i+n] for i in range(0, len(values), n)]\n"
+  },
+  "py-expiry": {
+    "path": "src/repair.py",
+    "content": "def repair(expirations, now):\n    return [key for key, expiry in expirations.items() if expiry > now]\n"
+  },
+  "py-unicode": {
+    "path": "src/repair.py",
+    "content": "import unicodedata\n\ndef repair(values):\n    groups = {}\n    for value in values:\n        key = unicodedata.normalize('NFC', value).casefold()\n        groups.setdefault(key, []).append(value)\n    return groups\n"
+  },
+  "py-ledger": {
+    "path": "src/repair.py",
+    "content": "def repair(entries):\n    return [entry for entry in entries if entry.get('amount') is not None]\n"
+  },
+  "ts-versions": {
+    "path": "src/repair.ts",
+    "content": "export function repair(a: string, b: string): number {\n  const left = a.split('.');\n  const right = b.split('.');\n  for (let i = 0; i < Math.max(left.length, right.length); i++) {\n    const x = Number(left[i] ?? '0'), y = Number(right[i] ?? '0');\n    if (x !== y) return x < y ? -1 : 1;\n  }\n  return 0;\n}\n"
+  },
+  "ts-capacity": {
+    "path": "src/repair.ts",
+    "content": "export function repair<T>(items: T[], capacity: number): T[] {\n  if (capacity < 0) throw new RangeError('negative capacity');\n  return items.slice(0, capacity);\n}\n"
+  },
+  "ts-dates": {
+    "path": "src/repair.ts",
+    "content": "export function repair(day: string): string {\n  const date = new Date(day + 'T00:00:00Z');\n  date.setUTCDate(date.getUTCDate() + 1);\n  return date.toISOString().slice(0, 10);\n}\n"
+  },
+  "ts-records": {
+    "path": "src/repair.ts",
+    "content": "export function repair(items: {id: string; value: number}[]) {\n  const found = new Map<string, {id: string; value: number}>();\n  for (const item of items) {\n    found.set(item.id, item);\n  }\n  return [...found.values()];\n}\n"
+  },
+  "ts-chunks": {
+    "path": "src/repair.ts",
+    "content": "export function repair<T>(items: T[], size: number): T[][] {\n  if (!Number.isInteger(size) || size <= 0) throw new RangeError('invalid size');\n  const result: T[][] = [];\n  for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size));\n  return result;\n}\n"
+  },
+  "ts-average": {
+    "path": "src/repair.ts",
+    "content": "export function repair(values: number[], window: number): number[] {\n  if (!Number.isInteger(window) || window <= 0) throw new RangeError('invalid window');\n  return values.map((_, i) => {\n    const slice = values.slice(Math.max(0, i - window + 1), i + 1);\n    return slice.reduce((a, b) => a + b, 0) / slice.length;\n  });\n}\n"
+  }
+}
