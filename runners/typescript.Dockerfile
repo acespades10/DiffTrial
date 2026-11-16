@@ -3,5 +3,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -
 COPY execute.py vitest.config.mjs /opt/runner/
 USER 10001:10001
 WORKDIR /work
-ENV CI=true
+ENV CI=true XDG_DATA_HOME=/tmp/xdg-data NO_COLOR=1
 CMD ["python3", "/opt/runner/execute.py", "typescript", "tests"]

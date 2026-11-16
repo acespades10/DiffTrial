@@ -9,7 +9,26 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 profile, check = sys.argv[1:]
-if profile == "python":
+if check == "setup":
+    command = (
+        [
+            "python",
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--no-cache-dir",
+            "--require-hashes",
+            "--only-binary=:all:",
+            "--target",
+            "/work/deps",
+            "-r",
+            "requirements.lock",
+        ]
+        if profile == "python"
+        else ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--cache", "/tmp/npm-cache"]
+    )
+elif profile == "python":
     command = (
         [
             "python",
@@ -63,6 +82,8 @@ except subprocess.TimeoutExpired:
     process.wait()
     print("DiffTrial command deadline exceeded", file=sys.stderr)
     sys.exit(124)
+if check == "setup":
+    sys.exit(exit_code)
 report = {"exit_code": exit_code, "check": check, "cases": [], "report_valid": check == "static"}
 try:
     if check == "tests" and profile == "python":

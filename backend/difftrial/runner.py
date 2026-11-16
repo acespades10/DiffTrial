@@ -76,13 +76,13 @@ class DockerRunner:
             "max-size=1m",
             "--log-opt",
             "max-file=2",
+            "--env",
+            f"DIFFTRIAL_COMMAND_SECONDS={self.limits.command_seconds}",
         ]
         if offline:
             flags += [
                 "--network=none",
                 "--read-only",
-                "--env",
-                f"DIFFTRIAL_COMMAND_SECONDS={self.limits.command_seconds}",
                 "--tmpfs",
                 "/tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001",
             ]
@@ -138,24 +138,7 @@ class DockerRunner:
         base = "difftrial-" + profile + ":v1"
         if self.call(["image", "inspect", base], check=False).returncode:
             raise ExecutionError(f"Runner image missing. Run: difftrial build-runners ({base})")
-        command = (
-            [
-                "python",
-                "-m",
-                "pip",
-                "install",
-                "--disable-pip-version-check",
-                "--no-cache-dir",
-                "--require-hashes",
-                "--only-binary=:all:",
-                "--target",
-                "/work/deps",
-                "-r",
-                "requirements.lock",
-            ]
-            if profile == "python"
-            else ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--cache", "/tmp/npm-cache"]
-        )
+        command = ["python" if profile == "python" else "python3", "/opt/runner/execute.py", profile, "setup"]
         name = self.create(base, command, offline=False)
         self.copy_source(name, source)
         code, log, duration = self.execute(name)
